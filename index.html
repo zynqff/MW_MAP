@@ -3,10 +3,301 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мой первый сайт</title>
+    <title>Интерактивная карта Magic World (MW) с врагами</title>
+    <!-- Подключаем Tailwind CSS для стилизации -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #121212;
+            color: #E0E0E0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+        #map-container {
+            position: relative;
+            width: 100%;
+            padding-bottom: 75%; /* Сохраняет соотношение сторон 4:3 */
+            max-width: 1000px;
+            margin: auto;
+        }
+        #map-container img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+        .hotspot {
+            position: absolute;
+            cursor: pointer;
+            background-color: transparent;
+            border-radius: 50%;
+            transition: background-color 0.3s ease;
+        }
+        .hotspot:hover {
+            background-color: rgba(255, 255, 255, 0.4);
+        }
+        .hidden {
+            display: none;
+        }
+        .enemy-link {
+            text-decoration: underline;
+            cursor: pointer;
+            color: #a78bfa; /* Цвет ссылки, например, фиолетовый */
+            transition: color 0.2s ease;
+        }
+        .enemy-link:hover {
+            color: #c4b5fd;
+        }
+    </style>
 </head>
-<body>
-    <h1>Привет, мир!</h1>
-    <p>Это моя первая веб-страница, размещенная на GitHub Pages.</p>
+<body class="bg-gray-900 text-gray-100 p-4">
+
+<!-- Основной вид с общей картой -->
+<div id="main-view" class="container mx-auto max-w-7xl">
+    <header class="text-center mb-8 sm:mb-12">
+        <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
+            Интерактивная карта
+        </h1>
+        <p class="text-md sm:text-lg text-gray-400">
+            Нажмите на мир, чтобы увидеть подробную карту
+        </p>
+    </header>
+
+    <div id="map-container" class="relative">
+        <img id="main-map-image" src="https://i.postimg.cc/G3fYDjqf/Nexus.png" alt="Общая карта миров">
+        
+        <div data-world-id="icy-silence" class="hotspot" style="top: 15%; left: 12%; width: 15%; height: 25%; transform: rotate(90deg);"></div>
+        <div data-world-id="floating-islands" class="hotspot" style="top: 11.5%; left: 40.25%; width: 19.5%; height: 26%;"></div>
+        <div data-world-id="celestial-radiance" class="hotspot" style="top: 15%; left: 70%; width: 15%; height: 25%; transform: rotate(90deg);"></div>
+        <div data-world-id="eternal-night" class="hotspot" style="top: 40%; left: 5%; width: 15%; height: 20%;"></div>
+        <div data-world-id="eternal-flame-1" class="hotspot" style="top: 35%; left: 28%; width: 14%; height: 25%; transform: rotate(90deg);"></div>
+        <div data-world-id="eternal-flame-2" class="hotspot" style="top: 35%; left: 58%; width: 14%; height: 25%; transform: rotate(90deg);"></div>
+        <div data-world-id="misty-dreams" class="hotspot" style="top: 40%; left: 80.5%; width: 15%; height: 20%;"></div>
+        <div data-world-id="living-earth" class="hotspot" style="top: 58.2%; left: 22.5%; width: 20%; height: 25%;"></div>
+        <div data-world-id="temporal-continuum" class="hotspot" style="top: 57.5%; left: 59%; width: 17%; height: 25%; transform: rotate(90deg);"></div>
+    </div>
+</div>
+
+<!-- Детальный вид карты (изначально скрыт) -->
+<div id="detail-view" class="hidden min-h-screen flex flex-col items-center justify-center p-4">
+    <div class="container mx-auto max-w-4xl bg-gray-800 p-6 sm:p-8 rounded-3xl shadow-lg border border-gray-700">
+        <button
+            id="back-button"
+            class="mb-6 flex items-center space-x-2 text-purple-400 hover:text-purple-300 transition"
+        >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+            <span>Вернуться к карте</span>
+        </button>
+        <h1 id="detail-title" class="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-4 text-center text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600"></h1>
+        <div class="flex flex-col items-center">
+            <img id="detail-image" src="" alt="" class="w-full h-auto rounded-xl shadow-md border border-gray-600 mb-6" />
+            <p id="detail-description" class="text-lg text-gray-300 leading-relaxed text-center"></p>
+        </div>
+        <!-- Новый блок для отображения информации о врагах -->
+        <div id="enemy-details" class="hidden mt-6 p-4 bg-gray-700 rounded-lg">
+            <h3 class="text-xl font-bold mb-2 text-purple-300">Враг: <span id="enemy-name"></span></h3>
+            <p id="enemy-info" class="text-gray-400"></p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // База данных врагов
+    const enemiesData = {
+        'каменные големы': {
+            name: 'Каменный голем',
+            info: 'Эти гигантские существа, созданные из оживших скал, обладают невероятной силой и устойчивостью к физическому урону. Их слабое место — магические атаки и удары по кристаллическим наростам на их теле.'
+        },
+        'ожившие корни деревьев': {
+            name: 'Ожившие корни деревьев',
+            info: 'Коварные и быстрые, они могут появляться из-под земли и опутывать противника. Лучшая тактика — использовать огонь, чтобы быстро их уничтожить.'
+        },
+        'элементали земли': {
+            name: 'Элементаль земли',
+            info: 'Создания из чистой стихии земли. Могут призывать камни и вызывать небольшие землетрясения. Уязвимы к атакам водой и воздухом.'
+        },
+        'огненные элементали': {
+            name: 'Огненный элементаль',
+            info: 'Жаркие и быстрые существа, способные бросать огненные шары. Их можно победить, используя заклинания льда или воды.'
+        },
+        'лавовые скорпионы': {
+            name: 'Лавовый скорпион',
+            info: 'Ядовитые существа, живущие в лаве. Их панцирь невероятно прочен, но их ядовитое жало можно использовать против них самих, если направить атаку магией воды.'
+        },
+        'воздушные элементали': {
+            name: 'Воздушный элементаль',
+            info: 'Невидимые и стремительные создания. Могут создавать сильные порывы ветра, которые сбивают с ног. Лучший способ борьбы — использовать магию земли или электричества.'
+        },
+        'химеры': {
+            name: 'Химера',
+            info: 'Существа, собранные из частей разных животных. Их атаки непредсказуемы, так как они могут использовать как физическую силу, так и магию. Нужно быть готовым к любой атаке.'
+        },
+        'ледяные големы': {
+            name: 'Ледяной голем',
+            info: 'Медлительные, но очень сильные существа, созданные изо льда. Они могут замораживать противников и создавать ледяные стены. Огонь и тепло — их главное уязвимое место.'
+        },
+        'морозные духи': {
+            name: 'Морозный дух',
+            info: 'Призрачные существа, которые вытягивают тепло из противников. Они очень трудноуловимы, но их можно временно ослабить с помощью заклинаний света.'
+        },
+        'теневые создания': {
+            name: 'Теневое создание',
+            info: 'Живые тени, которые могут изменять свою форму и проникать сквозь предметы. Их можно повредить только с помощью сильных заклинаний света или огня.'
+        },
+        'пожиратели света': {
+            name: 'Пожиратель света',
+            info: 'Эти существа поглощают свет вокруг себя, оставляя после себя полную темноту. Нужно быстро действовать, пока они не лишили вас источника света.'
+        },
+        'призраки': {
+            name: 'Призрак',
+            info: 'Нематериальные существа, которые могут проходить сквозь стены. Их можно повредить только специальным оружием или заклинаниями, предназначенными для борьбы с нежитью.'
+        },
+        'существа, способные управлять временем': {
+            name: 'Страж времени',
+            info: 'Эти загадочные существа могут замедлять или ускорять время вокруг себя. Единственный способ победить их — это быть быстрее и умнее, чем они.'
+        },
+        'темпоральные призраки': {
+            name: 'Темпоральный призрак',
+            info: 'Призрачные существа, которые являются отражениями из прошлого. Они могут исчезать и появляться в любой момент. Для борьбы с ними нужно использовать заклинания, стабилизирующие время.'
+        },
+    };
+
+    // Маппинг данных для каждой локации
+    const worldsData = {
+        'living-earth': {
+            name: 'Живая Земля',
+            detailedImage: 'https://i.postimg.cc/76d3q1Rj/Living-Island.png',
+            description: `Мир, где природа обладает собственным разумом и силой. Древние, мудрые деревья-гиганты, леса которых светятся мягким, зелёным светом, переплетаются с величественными горами из сияющих кристаллов. Загадочные подземные пещеры ведут к сердцу планеты, наполненному чистой энергией. Основные враги: <span class="enemy-link" data-enemy-id="каменные големы">каменные големы</span>, <span class="enemy-link" data-enemy-id="ожившие корни деревьев">ожившие корни деревьев</span>, <span class="enemy-link" data-enemy-id="элементали земли">элементали земли</span>, потерявшие связь с природой.`,
+        },
+        'eternal-flame-1': {
+            name: 'Вечное Пламя',
+            detailedImage: 'https://i.postimg.cc/1Xw1BQNX/Eternal-Flame.png',
+            description: `Мир, постоянно охваченный жаром и пламенем. Небо здесь всегда затянуто пеплом, а воздух дрожит от зноя. Потоки расплавленной лавы текут, как реки, вырезая новые ландшафты. Жизнь здесь существует в самых экстремальных формах, адаптируясь к непрерывной огненной буре. Основные враги: <span class="enemy-link" data-enemy-id="огненные элементали">огненные элементали</span>, <span class="enemy-link" data-enemy-id="лавовые скорпионы">лавовые скорпионы</span>.`,
+        },
+        'eternal-flame-2': {
+            name: 'Вечное Пламя',
+            detailedImage: 'https://i.postimg.cc/1Xw1BQNX/Eternal-Flame.png',
+            description: `Мир, постоянно охваченный жаром и пламенем. Небо здесь всегда затянуто пеплом, а воздух дрожит от зноя. Потоки расплавленной лавы текут, как реки, вырезая новые ландшафты. Жизнь здесь существует в самых экстремальных формах, адаптируясь к непрерывной огненной буре. Основные враги: <span class="enemy-link" data-enemy-id="огненные элементали">огненные элементали</span>, <span class="enemy-link" data-enemy-id="лавовые скорпионы">лавовые скорпионы</span>.`,
+        },
+        'floating-islands': {
+            name: 'Парящие Острова',
+            detailedImage: 'https://placehold.co/800x600/2980b9/ecf0f1?text=Парящие+Острова',
+            description: `Королевство, состоящее из сотен островов, которые свободно парят в небе. Под ними простирается бесконечная пустота, а над ними — кристально-чистое небо. Между островами можно перемещаться по невидимым магическим мостам, но сильные ветра и коварные воздушные потоки делают это опасным. Основные враги: <span class="enemy-link" data-enemy-id="воздушные элементали">воздушные элементали</span>, <span class="enemy-link" data-enemy-id="химеры">химеры</span>.`,
+        },
+        'icy-silence': {
+            name: 'Ледяное Безмолвие',
+            detailedImage: 'https://i.postimg.cc/66jMjSh5/Icy-Silence.png',
+            description: `Мир, где всё застыло во времени, покрытое вечным льдом и снегом. Холод здесь настолько сильный, что может заморозить даже магию. Величественные ледяные шпили и кристальные пещеры, которые отражают свет, создают завораживающую, но смертельно опасную красоту. Основные враги: <span class="enemy-link" data-enemy-id="ледяные големы">ледяные големы</span>, <span class="enemy-link" data-enemy-id="морозные духи">морозные духи</span>.`,
+        },
+        'celestial-radiance': {
+            name: 'Небесное Сияние',
+            detailedImage: 'https://i.postimg.cc/3rCGSDC8/Celeststial-Radiance.png',
+            description: `Мир, залитый чистым, целительным светом. Каждая частица здесь наполнена сиянием и покоем. Однако, этому миру угрожают неумолимые, живые тени, что медленно поглощают сияние и превращают его в пустоту. Путешественникам здесь нужно не только выживать, но и активно бороться с тьмой, восстанавливая утраченный свет. Основные враги: <span class="enemy-link" data-enemy-id="теневые создания">теневые создания</span>, <span class="enemy-link" data-enemy-id="пожиратели света">пожиратели света</span>.`,
+        },
+        'eternal-night': {
+            name: 'Вечная Ночь',
+            detailedImage: 'https://i.postimg.cc/bN12DSdc/Eternal-Night.png',
+            description: `Мир, погружённый в глубокую, непроглядную тень. Здесь нет солнца, только тусклое свечение звёзд и светящиеся грибы, которые создают призрачные тропы. Местные обитатели адаптировались к жизни во тьме, став невидимыми или используя собственное свечение для охоты. Основные враги: <span class="enemy-link" data-enemy-id="теневые создания">теневые создания</span>, <span class="enemy-link" data-enemy-id="призраки">призраки</span>.`,
+        },
+        'misty-dreams': {
+            name: 'Туманные Сны',
+            detailedImage: 'https://placehold.co/800x600/95a5a6/1c2826?text=Туманные+Сны',
+            description: `Место, где реальность и иллюзии сливаются в единое целое. Постоянный, густой туман меняет очертания ландшафта, превращая деревья в замки, а реки — в дорожки из облаков. Путешественникам очень сложно здесь ориентироваться, и они рискуют навсегда заблудиться в лабиринте собственных снов. Основные враги: <span class="enemy-link" data-enemy-id="туманные существа">туманные существа</span>, <span class="enemy-link" data-enemy-id="химеры">химеры</span>.`,
+        },
+        'temporal-continuum': {
+            name: 'Временной Континуум',
+            detailedImage: 'https://placehold.co/800x600/8e44ad/ecf0f1?text=Временной+Континуум',
+            description: `Загадочное измерение, где время течёт по своим законам. Некоторые области застыли в прошлом, другие — опережают настоящее. Путешествия здесь требуют особой осторожности: один неверный шаг может отправить вас на века назад или вперёд. Основные враги: <span class="enemy-link" data-enemy-id="существа, способные управлять временем">существа, способные управлять временем</span>, <span class="enemy-link" data-enemy-id="темпоральные призраки">темпоральные призраки</span>.`,
+        },
+    };
+
+    // Получаем ссылки на DOM-элементы
+    const mainView = document.getElementById('main-view');
+    const detailView = document.getElementById('detail-view');
+    const detailTitle = document.getElementById('detail-title');
+    const detailImage = document.getElementById('detail-image');
+    const detailDescription = document.getElementById('detail-description');
+    const backButton = document.getElementById('back-button');
+    const enemyDetailsPanel = document.getElementById('enemy-details');
+    const enemyName = document.getElementById('enemy-name');
+    const enemyInfo = document.getElementById('enemy-info');
+
+    // Функция для отображения детального вида
+    const showDetailView = (worldId) => {
+        const world = worldsData[worldId];
+        if (world) {
+            detailTitle.textContent = world.name;
+            detailImage.src = world.detailedImage;
+            detailImage.alt = `Карта ${world.name}`;
+            detailDescription.innerHTML = world.description; // Используем innerHTML для вставки HTML-ссылок
+            
+            // Скрываем панель врага при переходе к новому миру
+            enemyDetailsPanel.classList.add('hidden');
+
+            mainView.classList.add('hidden');
+            detailView.classList.remove('hidden');
+
+            // Добавляем обработчики клика для новых ссылок на врагов
+            document.querySelectorAll('.enemy-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Останавливаем всплытие события, чтобы не сработал клик по описанию
+                    const enemyId = link.getAttribute('data-enemy-id');
+                    showEnemyDetails(enemyId);
+                });
+            });
+
+        } else {
+            // Если для мира нет данных, показываем сообщение
+            detailTitle.textContent = 'Нет подробной карты';
+            detailImage.src = '';
+            detailImage.alt = '';
+            detailDescription.textContent = 'Информация о данном мире недоступна.';
+            mainView.classList.add('hidden');
+            detailView.classList.remove('hidden');
+        }
+    };
+
+    // Функция для отображения информации о враге
+    const showEnemyDetails = (enemyId) => {
+        const enemy = enemiesData[enemyId];
+        if (enemy) {
+            enemyName.textContent = enemy.name;
+            enemyInfo.textContent = enemy.info;
+            enemyDetailsPanel.classList.remove('hidden');
+        } else {
+            enemyDetailsPanel.classList.add('hidden');
+        }
+    };
+
+    // Функция для возврата к основной карте
+    const showMainView = () => {
+        detailView.classList.add('hidden');
+        mainView.classList.remove('hidden');
+    };
+
+    // Добавляем обработчики событий для всех точек доступа
+    document.querySelectorAll('.hotspot').forEach(hotspot => {
+        hotspot.addEventListener('click', () => {
+            const worldId = hotspot.getAttribute('data-world-id');
+            showDetailView(worldId);
+        });
+    });
+
+    // Добавляем обработчик для кнопки "Назад"
+    backButton.addEventListener('click', showMainView);
+</script>
+
 </body>
 </html>
